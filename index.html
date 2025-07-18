@@ -10,7 +10,7 @@
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #a8e6cf 0%, #88d8a3 100%);
             min-height: 100vh;
         }
         .container {
@@ -24,7 +24,7 @@
             text-align: center;
             margin-bottom: 30px;
             font-size: 2.5em;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #2e7d32 0%, #388e3c 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -33,14 +33,14 @@
             background: #f8f9fa;
             padding: 30px;
             border-radius: 15px;
-            border: 2px dashed #667eea;
+            border: 2px dashed #4caf50;
             text-align: center;
             margin: 30px 0;
             transition: all 0.3s ease;
         }
         .upload-section:hover {
-            border-color: #764ba2;
-            background: #f0f4ff;
+            border-color: #388e3c;
+            background: #f0f8f0;
         }
         .upload-section.dragover {
             border-color: #4caf50;
@@ -100,7 +100,7 @@
             padding: 20px;
             border-radius: 10px;
             margin: 20px 0;
-            border-left: 5px solid #667eea;
+            border-left: 5px solid #4caf50;
         }
         .stats-grid {
             display: grid;
@@ -131,7 +131,7 @@
             display: none;
         }
         .download-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);
             color: white;
             padding: 15px 30px;
             font-size: 18px;
@@ -187,11 +187,11 @@
             background-color: #f9f9f9;
         }
         .daf-summary {
-            background: #e8f4f8;
+            background: #e8f5e8;
             padding: 20px;
             border-radius: 10px;
             margin: 20px 0;
-            border-left: 5px solid #2196f3;
+            border-left: 5px solid #4caf50;
         }
         .daf-list {
             display: grid;
@@ -540,10 +540,6 @@
             }
 
             try {
-                const ws = XLSX.utils.aoa_to_sheet(processedData);
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, 'Complete DAF Data');
-                
                 // Generate filename with current date and time
                 const now = new Date();
                 const year = now.getFullYear();
@@ -555,6 +551,12 @@
                 
                 const timestamp = `${year}${month}${day}_${hours}${minutes}${seconds}`;
                 const filename = `DAF Static file ${timestamp}.xlsx`;
+                
+                console.log('Generated filename:', filename); // Debug log
+                
+                const ws = XLSX.utils.aoa_to_sheet(processedData);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, 'DAF Static Data');
                 
                 XLSX.writeFile(wb, filename);
                 showStatus('success', `✅ Excel file downloaded as: ${filename}`);
