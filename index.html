@@ -213,12 +213,6 @@
     <div class="container">
         <h1>📊 Complete DAF Data Restructurer</h1>
         
-        <div class="info-box">
-            <h3>🔄 Enhanced Data Transformation</h3>
-            <p><strong>Now handles ALL 15 DAF values:</strong> 0.8, 0.6, 0.4, 0.2, and 11 values of 0.01</p>
-            <p>Each original row becomes <strong>15 rows</strong> (one for each DAF value) with corresponding dates.</p>
-        </div>
-
         <div class="daf-summary">
             <h3>📋 DAF Values Processed</h3>
             <div class="daf-list">
@@ -273,25 +267,8 @@
             </div>
 
             <div class="download-section" id="downloadSection">
-                <h3>📥 Get Your Complete Restructured Data</h3>
-                <button class="download-btn copy-btn" onclick="showCopyableData()">📋 Copy Data (Recommended)</button>
-                <button class="download-btn" onclick="downloadCSV()">📄 Try Download CSV</button>
-                <button class="download-btn" onclick="downloadExcel()">📊 Try Download Excel</button>
-            </div>
-
-            <div id="copyableDataSection" class="copyable-section">
-                <h3>📋 Copy This Data to Excel</h3>
-                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 10px 0;">
-                    <strong>Instructions:</strong>
-                    <ol>
-                        <li>Click "Select All" button below</li>
-                        <li>Copy the selected text (Ctrl+C or Cmd+C)</li>
-                        <li>Open Excel and paste (Ctrl+V or Cmd+V)</li>
-                        <li>Excel will automatically separate the columns</li>
-                    </ol>
-                </div>
-                <button class="upload-btn" onclick="selectAllData()" style="margin-bottom: 10px;">Select All Data</button>
-                <textarea id="copyableData" class="copyable-textarea" readonly></textarea>
+                <h3>📥 Download Your Complete Restructured Data</h3>
+                <button class="download-btn" onclick="downloadExcel()">📊 Download Excel</button>
             </div>
 
             <div class="info-box">
@@ -358,6 +335,13 @@
             }
         }
 
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                handleFile(file);
+            }
+        }
+
         function handleFile(file) {
             if (!file.name.match(/\.(xlsx|xls)$/)) {
                 showStatus('error', '❌ Please select an Excel file (.xlsx or .xls)');
@@ -403,6 +387,43 @@
 
                 const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
                 const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+
+                // Validate file structure
+                const fileHeaders = jsonData[0];
+                const expectedColumns = [
+                    'Part Code', 'WH Code', 'DLT', 'Max FC Week Out', 'DLT in weeks',
+                    'NEW MAX Forecast WEEK OUT', 'Current Week', 'DAF 0.8 Week', 'Date in Week'
+                ];
+                
+                // Check if file has the expected structure
+                let hasCorrectStructure = true;
+                let missingColumns = [];
+                
+                expectedColumns.forEach(expectedCol => {
+                    const found = fileHeaders.some(header => 
+                        header && header.toString().toLowerCase().includes(expectedCol.toLowerCase())
+                    );
+                    if (!found) {
+                        hasCorrectStructure = false;
+                        missingColumns.push(expectedCol);
+                    }
+                });
+
+                // Check for DAF columns specifically
+                const hasDafColumns = fileHeaders.some(header => 
+                    header && header.toString().includes('DAF') && header.toString().includes('Week')
+                );
+                
+                const hasDateColumns = fileHeaders.some(header => 
+                    header && header.toString().toLowerCase().includes('date in week')
+                );
+
+                if (!hasCorrectStructure || !hasDafColumns || !hasDateColumns) {
+                    showStatus('error', `❌ This file doesn't appear to be a DAF export file. Missing expected columns like "DAF 0.8 Week", "Date in Week", etc. Please upload the correct DAF export file.`);
+                    return;
+                }
+
+                showStatus('loading', '🔄 File validated successfully, processing data...');
 
                 const restructuredData = [];
                 const headers = [
@@ -512,73 +533,6 @@
             previewEl.style.display = 'block';
         }
 
-        function showCopyableData() {
-            if (!processedData) {
-                alert('Please process a file first.');
-                return;
-            }
-
-            const tabSeparatedData = processedData.map(row => 
-                row.map(cell => {
-                    if (cell === null || cell === undefined) return '';
-                    return cell.toString();
-                }).join('\t')
-            ).join('\n');
-
-            document.getElementById('copyableDataSection').style.display = 'block';
-            document.getElementById('copyableData').value = tabSeparatedData;
-            document.getElementById('copyableDataSection').scrollIntoView({ behavior: 'smooth' });
-            
-            showStatus('success', '✅ Data ready to copy! Scroll down to see the copyable text.');
-        }
-
-        function selectAllData() {
-            const textarea = document.getElementById('copyableData');
-            textarea.select();
-            textarea.setSelectionRange(0, 99999);
-            
-            try {
-                document.execCommand('copy');
-                showStatus('success', '✅ Data copied to clipboard! Now paste it into Excel.');
-            } catch (err) {
-                showStatus('error', '❌ Could not copy automatically. Please select the text and copy manually (Ctrl+C).');
-            }
-        }
-
-        function downloadCSV() {
-            if (!processedData) {
-                alert('Please process a file first.');
-                return;
-            }
-
-            try {
-                const csvContent = processedData.map(row => 
-                    row.map(cell => {
-                        if (cell === null || cell === undefined) return '';
-                        if (typeof cell === 'string' && (cell.includes(',') || cell.includes('"') || cell.includes('\n'))) {
-                            return `"${cell.replace(/"/g, '""')}"`;
-                        }
-                        return cell;
-                    }).join(',')
-                ).join('\n');
-
-                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = 'Complete_DAF_Data_15_Values.csv';
-                
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                
-                setTimeout(() => URL.revokeObjectURL(url), 1000);
-                showStatus('success', '✅ CSV download triggered! Check your downloads folder.');
-            } catch (error) {
-                showStatus('error', '❌ Download failed. Please use the "Copy Data" option instead.');
-            }
-        }
-
         function downloadExcel() {
             if (!processedData) {
                 alert('Please process a file first.');
@@ -591,9 +545,10 @@
                 XLSX.utils.book_append_sheet(wb, ws, 'Complete DAF Data');
                 
                 XLSX.writeFile(wb, 'Complete_DAF_Data_15_Values.xlsx');
-                showStatus('success', '✅ Excel download triggered! Check your downloads folder.');
+                showStatus('success', '✅ Excel file downloaded successfully!');
             } catch (error) {
-                showStatus('error', '❌ Excel download failed. Please use the "Copy Data" option instead.');
+                console.error('Excel download error:', error);
+                showStatus('error', `❌ Excel download failed: ${error.message}`);
             }
         }
     </script>
