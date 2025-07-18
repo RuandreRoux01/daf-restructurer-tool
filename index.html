@@ -544,8 +544,20 @@
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, 'Complete DAF Data');
                 
-                XLSX.writeFile(wb, 'Complete_DAF_Data_15_Values.xlsx');
-                showStatus('success', '✅ Excel file downloaded successfully!');
+                // Generate filename with current date and time
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                const day = String(now.getDate()).padStart(2, '0');
+                const hours = String(now.getHours()).padStart(2, '0');
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                const seconds = String(now.getSeconds()).padStart(2, '0');
+                
+                const timestamp = `${year}${month}${day}_${hours}${minutes}${seconds}`;
+                const filename = `DAF Static file ${timestamp}.xlsx`;
+                
+                XLSX.writeFile(wb, filename);
+                showStatus('success', `✅ Excel file downloaded as: ${filename}`);
             } catch (error) {
                 console.error('Excel download error:', error);
                 showStatus('error', `❌ Excel download failed: ${error.message}`);
